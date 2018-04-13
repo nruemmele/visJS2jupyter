@@ -138,8 +138,11 @@ def visjs_network(nodes_dict, edges_dict,
                            zoom_view = True, # When true, the user can zoom in.
 
                            # configuration
-                           config_enabled = False, # Toggle the configuration interface on or off. This is an optional parameter. If left undefined and any of the other properties of this object are defined, this will be set to true.
-                           config_filter = "nodes,edges", # When a string is supplied, any combination of the following is allowed: nodes, edges, layout, interaction, manipulation, physics, selection, renderer. Feel free to come up with a fun seperating character. Finally, when supplied an array of strings, any of the previously mentioned fields are accepted.
+                           config_enabled = False, # Toggle the configuration interface on or off. This is an optional parameter.
+                                                #  If left undefined and any of the other properties of this object are defined, this will be set to true.
+                           config_filter = "nodes,edges", # When a string is supplied, any combination of the following is allowed:
+                  #  nodes, edges, layout, interaction, manipulation, physics, selection, renderer.
+                  # Feel free to come up with a fun seperating character. Finally, when supplied an array of strings, any of the previously mentioned fields are accepted.
                            container = "undefined", # This allows you to put the configure list in another HTML container than below the network.
                            showButton = False, # Show the generate options button at the bottom of the configurator.
 
@@ -607,7 +610,7 @@ def export_to_cytoscape(nodes_dict = 0,
     # write node data
     for i in range(len(G.nodes())):
         to_string += str('{\"data\":')
-        to_string += str(dict(G.nodes(data=True)).values()[i])
+        to_string += str(list(dict(G.nodes(data=True)).values())[i])
         if (i == len(G.nodes()) - 1):
             to_string += str('}],\"edges\":[')
         else:
@@ -755,6 +758,36 @@ def check_nodes_dict(nodes_dict):
             nodes_dict[i]['degree']=3.0
 
     return nodes_dict
+
+
+def check_edges_dict(edges_dict):
+    """
+    - Check edges_dict to make sure it has some required fields.
+    - Fill in default values if it is missing them
+    - Return updated edges_dict
+    """
+
+    edge_keys = edges_dict[0].keys()
+    if 'dashes' not in edge_keys:
+        for i in range(len(edges_dict)):
+            edges_dict[i]['dashes']='false'
+    if 'color' not in edge_keys:
+        for i in range(len(edges_dict)):
+            edges_dict[i]['color']='#848484'
+    # if 'width' not in edge_keys:
+    #     for i in range(len(edges_dict)):
+    #         edges_dict[i]['width']=0
+    # if 'title' not in edge_keys:
+    #     for i in range(len(edges_dict)):
+    #         edges_dict[i]['title']=edges_dict[i]['id']
+
+
+    return edges_dict
+
+
+def stringify_bool(var):
+    """# switch bool from python to JS"""
+    return 'true' if var else 'false'
 
 
 def create_graph_style_file(filename = 'visJS_html_file_temp',
@@ -906,10 +939,6 @@ def create_graph_style_file(filename = 'visJS_html_file_temp',
 
     '''
 
-    # switch bool from python to JS
-    def stringify_bool(var):
-      return 'true' if var else 'false'
-
     physics_enabled = stringify_bool(physics_enabled)
     edge_arrow_to = stringify_bool(edge_arrow_to)
     edge_arrow_from = stringify_bool(edge_arrow_from)
@@ -1003,7 +1032,6 @@ def create_graph_style_file(filename = 'visJS_html_file_temp',
                inherit: '""" + edge_color_inherit + """',
                opacity: """ + str(edge_color_opacity) + """
             },
-            dashes: """ + edge_dashes + """,
             font: {
                 color: '""" + edge_font_color + """',
                 size: """ + str(edge_font_size) + """*""" + str(scaling_factor) + """,
@@ -1180,6 +1208,7 @@ def create_graph_style_file(filename = 'visJS_html_file_temp',
        for(var i=0; i<python_edges.length; i++){
          edgeArray.push({from: python_edges[i].source,
                          to: python_edges[i].target,
+                         dashes: """ + edge_dashes +""",
                          label: python_edges[i].""" + edge_label_field + """,
                          title: python_edges[i].""" + edge_title_field + """,
                          color: {
